@@ -3,27 +3,28 @@
 #[cfg(windows)]
 extern crate winapi;
 // use std::ffi::CString;
-use std::io::Error;
+//use std::io::Error;
 use std::thread;
 use std::time::Duration;
+
 
 use enigo::*;
 
 
-#[cfg(windows)]
-fn print_message(msg: &str) -> Result<i32, Error> {
-    use std::ffi::OsStr;
-    use std::iter::once;
-    use std::os::windows::ffi::OsStrExt;
-    use std::ptr::null_mut;
-    use winapi::um::winuser::{MB_OK, MessageBoxW};
-    let wide: Vec<u16> = OsStr::new(msg).encode_wide().chain(once(0)).collect();
-    let ret = unsafe {
-        MessageBoxW(null_mut(), wide.as_ptr(), wide.as_ptr(), MB_OK)
-    };
-    if ret == 0 { Err(Error::last_os_error()) }
-    else { Ok(ret) }
-}
+// #[cfg(windows)]
+// fn print_message(msg: &str) -> Result<i32, Error> {
+//     use std::ffi::OsStr;
+//     use std::iter::once;
+//     use std::os::windows::ffi::OsStrExt;
+//     use std::ptr::null_mut;
+//     use winapi::um::winuser::{MB_OK, MessageBoxW};
+//     let wide: Vec<u16> = OsStr::new(msg).encode_wide().chain(once(0)).collect();
+//     let ret = unsafe {
+//         MessageBoxW(null_mut(), wide.as_ptr(), wide.as_ptr(), MB_OK)
+//     };
+//     if ret == 0 { Err(Error::last_os_error()) }
+//     else { Ok(ret) }
+// }
 
 
 fn last_activity_time() -> u32 {
@@ -34,11 +35,11 @@ fn last_activity_time() -> u32 {
     return idle_seconds;
 }
 
-#[cfg(not(windows))]
-fn print_message(msg: &str) -> Result<(), Error> {
-    println!("{}", msg);
-    Ok(())
-}
+// #[cfg(not(windows))]
+// fn print_message(msg: &str) -> Result<(), Error> {
+//     println!("{}", msg);
+//     Ok(())
+// }
 
 fn main() -> Result<(), systray::Error> {
     let mut app;
@@ -49,7 +50,7 @@ fn main() -> Result<(), systray::Error> {
     // w.set_icon_from_file(&"C:\\Users\\qdot\\code\\git-projects\\systray-rs\\resources\\rust.ico".to_string());
     // w.set_tooltip(&"Whatever".to_string());
     //app.set_icon_from_file("./resources/clock-3-128.ico")?;
-    app.set_icon_from_resource("IDI_APPLICATION_ICON")?;
+    app.set_icon_from_resource("IDI_APPLICATION")?;
     app.set_tooltip("Alive and Kicking")?;
 
     app.add_menu_item("Pause", |_| {
