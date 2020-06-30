@@ -88,8 +88,8 @@ fn main() -> Result<(), systray::Error> {
         //As we will be reading the value of should_pause, so avoiding cloning.
         thread::spawn(move || {
             let mut enigo = Enigo::new();
-            let threshold_duration_secs: u32 = 7;
-            const CHECK_INTERVAL_SECS: u64 = 13;
+            let threshold_duration_secs: u32 = 59;
+            const CHECK_INTERVAL_SECS: u64 = 61;
             let activity_duration_millis = 1000 * 1;
             let scroll_length = 1; //in number of notches ,it will be multiplied by WHEEL_DELTA=120
             // let activity_steps=activity_duration_millis/(scroll_length*2);
