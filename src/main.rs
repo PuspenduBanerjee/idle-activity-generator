@@ -9,6 +9,7 @@ use std::time::Duration;
 
 
 use enigo::*;
+use std::sync::{Arc, Mutex};
 
 
 // #[cfg(windows)]
@@ -53,10 +54,16 @@ fn main() -> Result<(), systray::Error> {
     app.set_icon_from_resource("IDI_APPLICATION")?;
     app.set_tooltip("Alive and Kicking")?;
 
-    app.add_menu_item("Pause", |_| {
-        println!("Pausing!");
-        Ok::<_, systray::Error>(())
-    })?;
+    let should_pause = Arc::new(Mutex::new(false));
+    {
+        let mt_should_pause = Arc::clone(&should_pause);
+        app.add_menu_item("Pause", move |_| {
+            let mut should_pause2 =mt_should_pause.lock().unwrap();
+            *should_pause2=!*should_pause2;
+            println!("Paused => {}",*should_pause2);
+            Ok::<_, systray::Error>(())
+        })?;
+    }
     //
     // app.add_menu_item("Add Menu Item", |window| {
     //     window.add_menu_item("Interior item", |_| {
@@ -74,24 +81,34 @@ fn main() -> Result<(), systray::Error> {
         Ok::<_, systray::Error>(())
     })?;
 
-    thread::spawn(|| {
-        let mut enigo = Enigo::new();
-        let threshold_duration_secs:u32=59;
-        let activity_duration_millis=1000*10;
-        let scroll_length=5; //in number of notches ,it will be multiplied by WHEEL_DELTA=120
-        // let activity_steps=activity_duration_millis/(scroll_length*2);
-        let sleep_per_step =
-            Duration::from_millis(activity_duration_millis/ scroll_length);
 
-        loop {
-            let last_activity_sec=last_activity_time();
-            println!("last activity {}s ago",last_activity_sec );
-            if last_activity_sec>threshold_duration_secs{
-                generate_activity(&mut enigo, scroll_length, sleep_per_step)
+    {
+        //Increment reference counter before passing to thread
+        //let t_should_pause = Arc::clone(&should_pause);
+        //As we will be reading the value of should_pause, so avoiding cloning.
+        thread::spawn(move || {
+            let mut enigo = Enigo::new();
+            let threshold_duration_secs: u32 = 7;
+            const CHECK_INTERVAL_SECS: u64 = 13;
+            let activity_duration_millis = 1000 * 1;
+            let scroll_length = 1; //in number of notches ,it will be multiplied by WHEEL_DELTA=120
+            // let activity_steps=activity_duration_millis/(scroll_length*2);
+            let sleep_per_step =
+                Duration::from_millis(activity_duration_millis / scroll_length);
+
+            loop {
+                let  should_pause_val = *should_pause.lock().unwrap();
+                if !should_pause_val {
+                    let last_activity_sec = last_activity_time();
+                    println!("last activity {}s ago", last_activity_sec);
+                    if last_activity_sec > threshold_duration_secs {
+                        generate_activity(&mut enigo, scroll_length, sleep_per_step)
+                    }
+                }
+                thread::sleep(Duration::from_secs(CHECK_INTERVAL_SECS));
             }
-            thread::sleep(Duration::from_secs(61));
-        }
-    });
+        });
+    }
     println!("Waiting on message!");
     app.wait_for_message()?;
     Ok(())
