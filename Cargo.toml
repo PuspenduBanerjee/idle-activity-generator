@@ -12,6 +12,8 @@ LegalCopyright = "Copyright © 2020"
 
 [target.'cfg(windows)'.build-dependencies]
 winres = "^0.1"
+filepath = "^0.1.1"
+tempfile = "^3.1.0"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 

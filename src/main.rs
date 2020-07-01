@@ -48,19 +48,24 @@ fn main() -> Result<(), systray::Error> {
         Ok(w) => app = w,
         Err(_) => panic!("Can't create window!"),
     }
-    // w.set_icon_from_file(&"C:\\Users\\qdot\\code\\git-projects\\systray-rs\\resources\\rust.ico".to_string());
-    // w.set_tooltip(&"Whatever".to_string());
-    //app.set_icon_from_file("./resources/clock-3-128.ico")?;
     app.set_icon_from_resource("IDI_APPLICATION")?;
     app.set_tooltip("Alive and Kicking")?;
 
     let should_pause = Arc::new(Mutex::new(false));
     {
         let mt_should_pause = Arc::clone(&should_pause);
-        app.add_menu_item("Pause", move |_| {
+        app.add_menu_item("Pause", move |window| {
             let mut should_pause2 =mt_should_pause.lock().unwrap();
             *should_pause2=!*should_pause2;
             println!("Paused => {}",*should_pause2);
+            if *should_pause2 {
+                window.set_icon_from_resource("PAUSED_ICON")?;
+                window.set_tooltip("Paused")?;
+
+            }else{
+                window.set_icon_from_resource("IDI_APPLICATION")?;
+                window.set_tooltip("Alive and Kicking")?;
+            }
             Ok::<_, systray::Error>(())
         })?;
     }
@@ -81,34 +86,31 @@ fn main() -> Result<(), systray::Error> {
         Ok::<_, systray::Error>(())
     })?;
 
+    //Increment reference counter before passing to thread
+    //let t_should_pause = Arc::clone(&should_pause);
+    //As we will be reading the value of should_pause, so avoiding cloning.
+    thread::spawn(move || {
+        let mut enigo = Enigo::new();
+        let threshold_duration_secs: u32 = 59;
+        const CHECK_INTERVAL_SECS: u64 = 61;
+        let activity_duration_millis = 1000 * 5;
+        let scroll_length = 6; //in number of notches ,it will be multiplied by WHEEL_DELTA=120
+        // let activity_steps=activity_duration_millis/(scroll_length*2);
+        let sleep_per_step =
+            Duration::from_millis(activity_duration_millis / scroll_length);
 
-    {
-        //Increment reference counter before passing to thread
-        //let t_should_pause = Arc::clone(&should_pause);
-        //As we will be reading the value of should_pause, so avoiding cloning.
-        thread::spawn(move || {
-            let mut enigo = Enigo::new();
-            let threshold_duration_secs: u32 = 59;
-            const CHECK_INTERVAL_SECS: u64 = 61;
-            let activity_duration_millis = 1000 * 1;
-            let scroll_length = 1; //in number of notches ,it will be multiplied by WHEEL_DELTA=120
-            // let activity_steps=activity_duration_millis/(scroll_length*2);
-            let sleep_per_step =
-                Duration::from_millis(activity_duration_millis / scroll_length);
-
-            loop {
-                let  should_pause_val = *should_pause.lock().unwrap();
-                if !should_pause_val {
-                    let last_activity_sec = last_activity_time();
-                    println!("last activity {}s ago", last_activity_sec);
-                    if last_activity_sec > threshold_duration_secs {
-                        generate_activity(&mut enigo, scroll_length, sleep_per_step)
-                    }
+        loop {
+            let  should_pause_val = *should_pause.lock().unwrap();
+            if !should_pause_val {
+                let last_activity_sec = last_activity_time();
+                println!("last activity {}s ago", last_activity_sec);
+                if last_activity_sec > threshold_duration_secs {
+                    generate_activity(&mut enigo, scroll_length, sleep_per_step)
                 }
-                thread::sleep(Duration::from_secs(CHECK_INTERVAL_SECS));
             }
-        });
-    }
+            thread::sleep(Duration::from_secs(CHECK_INTERVAL_SECS));
+        }
+    });
     println!("Waiting on message!");
     app.wait_for_message()?;
     Ok(())
@@ -127,10 +129,3 @@ fn mouse_scroll_y(enigo: &mut Enigo, scroll_length:i32,sleep_per_step:Duration){
     thread::sleep(sleep_per_step);
 }
 
-// fn main() {
-//     print_message(last_activity_time().to_string().as_str()).unwrap();
-// }
-
-// fn main() {
-//     println!("Hello, world!");
-// }
