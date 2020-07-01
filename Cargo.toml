@@ -1,6 +1,6 @@
 [package]
 name = "activity_maker_windows"
-version = "0.1.1"
+version = "0.1.2"
 authors = ["Puspendu Banerjee <Puspendu.Banerjee@gmail.com>"]
 edition = "2018"
 build = "build.rs"
