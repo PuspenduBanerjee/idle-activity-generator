@@ -2,12 +2,9 @@
 
 #[cfg(windows)]
 extern crate winapi;
-// use std::ffi::CString;
-//use std::io::Error;
+
 use std::thread;
 use std::time::Duration;
-
-
 use enigo::*;
 use std::sync::{Arc, Mutex};
 
